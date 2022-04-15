@@ -1,0 +1,8 @@
+---
+kind: pipeline
+type: docker
+name: build
+
+steps:
+  - template: github-mirror
+    repo: git@github.com:DSchroer/doffice.git
