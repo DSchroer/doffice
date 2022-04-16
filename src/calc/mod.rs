@@ -25,6 +25,12 @@ pub fn evaluate_csv_file(file: String) -> Result<(), Box<dyn Error>> {
     evaluate_csv(reader, &mut out_file)
 }
 
+pub fn evaluate_csv_str(input: &str) -> Result<String, Box<dyn Error>> {
+    let mut buf = Vec::new();
+    evaluate_csv(input.as_bytes(), &mut buf)?;
+    Ok(String::from_utf8(buf)?)
+}
+
 fn evaluate_csv(reader: impl Read, writer: &mut impl Write) -> Result<(), Box<dyn Error>> {
     let csv = CSVReader::new(BufReader::new(reader).bytes());
 

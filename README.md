@@ -64,6 +64,10 @@ OPTIONS:
     -t, --theme <THEME>    Theme to use for the presentation [white, black] [default: white]
 ```
 
+### Features
+
+- use the `csv` code type to have Calc replace formulas in your presentation
+
 ## Calc
 
 Process CSV files with formulas. Following Excel style formulas it will read a CSV file and output a new CSV with all the values computed.
@@ -84,7 +88,7 @@ OPTIONS:
     -h, --help    Print help information
 ```
 
-### Function Support:
+### Function Support
 - SUM
 - COUNT
 - AVERAGE

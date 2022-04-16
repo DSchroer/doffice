@@ -21,7 +21,7 @@ impl Display for Value {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Value::Bool(v) => if *v { write!(f, "TRUE") } else { write!(f, "FALSE") },
-            Value::Number(n) => write!(f, "{}", n),
+            Value::Number(n) => write!(f, "{:.2}", n),
             Value::Text(t) => write!(f, "{}", t),
             Value::Error(e) => write!(f, "#{}", e.to_uppercase()),
         }
