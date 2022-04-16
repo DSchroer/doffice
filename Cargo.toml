@@ -1,6 +1,6 @@
 [package]
 name = "doffice"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 license = "Apache-2.0"
 
@@ -9,3 +9,4 @@ license = "Apache-2.0"
 [dependencies]
 clap = { version = "3.1.8", features = ["derive"] }
 logos = "0.12.0"
+pulldown-cmark = { version = "0.9.1", default-features = false }

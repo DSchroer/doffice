@@ -1,6 +1,7 @@
 extern crate core;
 
 mod calc;
+mod doc;
 
 use std::error::Error;
 use clap::{Parser, Subcommand};
@@ -20,12 +21,17 @@ enum Commands {
     Calc {
         file: String
     },
+    /// Process markdown document
+    Doc {
+        file: String
+    },
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
 
     match args.command {
-        Commands::Calc { file } => calc::evaluate_csv_file(file)
+        Commands::Calc { file } => calc::evaluate_csv_file(file),
+        Commands::Doc { file } => doc::process_markdown_file(file),
     }
 }

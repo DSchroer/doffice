@@ -5,7 +5,7 @@ Set of simple office suite tools that work on plain text files.
 ### Usage
 
 ```
-doffice 0.1.0
+doffice 0.1.1
 Dominick Schroer <dominick@schroer.ca>
 Plain text office suite
 
@@ -18,7 +18,28 @@ OPTIONS:
 
 SUBCOMMANDS:
     calc    Process CSV file
+    doc     Process markdown document
     help    Print this message or the help of the given subcommand(s)
+```
+
+## Doc
+
+Convert Markdown files to HTML.
+
+### Usage
+
+```
+doffice-doc 
+Process markdown document
+
+USAGE:
+    doffice doc <FILE>
+
+ARGS:
+    <FILE>    
+
+OPTIONS:
+    -h, --help    Print help information
 ```
 
 ## Calc
