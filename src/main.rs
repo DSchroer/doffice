@@ -2,9 +2,11 @@ extern crate core;
 
 mod calc;
 mod doc;
+mod show;
 
 use std::error::Error;
 use clap::{Parser, Subcommand};
+use crate::show::Theme;
 
 #[derive(Parser)]
 #[clap(author, version)]
@@ -25,6 +27,13 @@ enum Commands {
     Doc {
         file: String
     },
+    /// Create slides from markdown
+    Show {
+        file: String,
+        /// Theme to use for the presentation [white, black]
+        #[clap(short, long, default_value = "white")]
+        theme: Theme
+    },
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -33,5 +42,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     match args.command {
         Commands::Calc { file } => calc::evaluate_csv_file(file),
         Commands::Doc { file } => doc::process_markdown_file(file),
+        Commands::Show { file, theme } => show::slides_from_file(file, theme),
     }
 }

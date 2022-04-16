@@ -18,13 +18,13 @@ pub fn process_markdown_file(file: String) -> Result<(), Box<dyn Error>> {
     let mut text = String::new();
     file.read_to_string(&mut text)?;
 
-    let html = process_markdown(&text);
+    let html = render_markdown(&text);
     out_file.write_all(html.as_bytes())?;
 
     Ok(())
 }
 
-fn process_markdown(input: &str) -> String {
+pub fn render_markdown(input: &str) -> String {
     let parser = Parser::new(input);
 
     let mut html_output = String::new();
@@ -35,10 +35,10 @@ fn process_markdown(input: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use crate::doc::process_markdown;
+    use crate::doc::render_markdown;
 
     #[test]
     fn emits_html() {
-        assert_eq!("<h1>hi</h1>\n", &process_markdown("# hi"));
+        assert_eq!("<h1>hi</h1>\n", &render_markdown("# hi"));
     }
 }
