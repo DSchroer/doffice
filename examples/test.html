@@ -1,0 +1,6 @@
+<script>
+    console.log("connecting");
+    new EventSource("http://localhost:8080/watch").addEventListener("ping", function(event) {
+        console.log("ping");
+    });
+</script>

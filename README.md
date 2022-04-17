@@ -5,7 +5,7 @@ Set of simple office suite tools that work on plain text files.
 ### Usage
 
 ```
-doffice 0.1.2
+doffice 0.1.3
 Dominick Schroer <dominick@schroer.ca>
 Plain text office suite
 
@@ -15,6 +15,7 @@ USAGE:
 OPTIONS:
     -h, --help       Print help information
     -V, --version    Print version information
+    -w, --watch      Watch mode
 
 SUBCOMMANDS:
     calc    Process CSV file

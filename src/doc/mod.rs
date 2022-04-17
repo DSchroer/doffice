@@ -3,26 +3,29 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::path::{Path};
 use pulldown_cmark::{Parser, html, Event, Tag, CodeBlockKind, CowStr};
-use crate::calc::evaluate_csv_str;
+use crate::calc::evaluate_csv_file;
+use crate::framework::{Command, Runner, RunnerConfig};
+use crate::Source;
 
-pub fn process_markdown_file(file: String) -> Result<(), Box<dyn Error>> {
+pub fn process_markdown_file(file: String, config: RunnerConfig) -> Result<(), Box<dyn Error>> {
     let path = Path::new(&file);
+    let runner = Runner::new(Doc(path));
+    runner.exec(config)
+}
 
-    let mut out_file = File::options()
-        .write(true)
-        .truncate(true)
-        .create(true)
-        .open(path.with_extension("out.html"))?;
+struct Doc<'a>(&'a Path);
 
-    let mut file = File::open(path)?;
+impl<'a> Command for Doc<'a> {
+    fn execute(&self, writer: &mut impl Write) -> Result<(), Box<dyn Error>> {
+        let mut file = File::open(self.0)?;
 
-    let mut text = String::new();
-    file.read_to_string(&mut text)?;
+        let mut text = String::new();
+        file.read_to_string(&mut text)?;
 
-    let html = render_markdown(&text);
-    out_file.write_all(html.as_bytes())?;
-
-    Ok(())
+        let html = render_markdown(&text);
+        writer.write_all(html.as_bytes())?;
+        Ok(())
+    }
 }
 
 pub fn render_markdown(input: &str) -> String {
@@ -36,8 +39,9 @@ pub fn render_markdown(input: &str) -> String {
                 _ => panic!("mal formatted code block")
             };
 
-            let computed = evaluate_csv_str(&text).unwrap();
-            events[i+1] = Event::Text(CowStr::from(computed));
+            let mut computed = Vec::new();
+            evaluate_csv_file(Source::FromString(text), RunnerConfig::ToData(&mut computed)).unwrap();
+            events[i+1] = Event::Text(CowStr::from(String::from_utf8(computed).unwrap()));
         }
     }
 

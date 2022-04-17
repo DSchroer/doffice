@@ -5,50 +5,54 @@ mod reader;
 use std::error::Error;
 use std::fs::File;
 use std::io::{BufReader, Read, Write};
-use std::path::Path;
 use std::string::String;
 
 use operators::{*};
 use engine::CSVEngine;
 use reader::CSVReader;
+use crate::framework::{Command, Runner, RunnerConfig};
 
-pub fn evaluate_csv_file(file: String) -> Result<(), Box<dyn Error>> {
-    let path = Path::new(&file);
-    let reader = File::open(path)?;
-
-    let mut out_file = File::options()
-        .write(true)
-        .truncate(true)
-        .create(true)
-        .open(path.with_extension("out.csv"))?;
-
-    evaluate_csv(reader, &mut out_file)
+pub fn evaluate_csv_file(source: Source, config: RunnerConfig) -> Result<(), Box<dyn Error>> {
+    let runner = Runner::new(Calc(source));
+    runner.exec(config)
 }
 
-pub fn evaluate_csv_str(input: &str) -> Result<String, Box<dyn Error>> {
-    let mut buf = Vec::new();
-    evaluate_csv(input.as_bytes(), &mut buf)?;
-    Ok(String::from_utf8(buf)?)
+pub enum Source {
+    FromFile(String),
+    FromString(String)
 }
 
-fn evaluate_csv(reader: impl Read, writer: &mut impl Write) -> Result<(), Box<dyn Error>> {
-    let csv = CSVReader::new(BufReader::new(reader).bytes());
+struct Calc(Source);
 
-    let mut engine = CSVEngine::new(csv);
-    engine.register_operator(Sum{});
-    engine.register_operator(Count{});
-    engine.register_operator(Average{});
+impl Command for Calc {
+    fn execute(&self, writer: &mut impl Write) -> Result<(), Box<dyn Error>> {
 
-    for cell in engine {
-        write!(writer, "{}", cell)?;
+        let mut engine =  match &self.0 {
+            Source::FromFile(path) => CSVEngine::new(CSVReader::new(BufReader::new(File::open(path)?).bytes())),
+            Source::FromString(data) => CSVEngine::new(CSVReader::new(BufReader::new(data.as_bytes()).bytes())),
+        };
+
+        engine.register_operator(Sum{});
+        engine.register_operator(Count{});
+        engine.register_operator(Average{});
+
+        for cell in engine {
+            write!(writer, "{}", cell)?;
+        }
+
+        Ok(())
     }
-
-    Ok(())
 }
+
+// pub fn evaluate_csv_str(input: &str) -> Result<String, Box<dyn Error>> {
+//     let mut buf = Vec::new();
+//     evaluate_csv(input.as_bytes(), &mut buf)?;
+//     Ok(String::from_utf8(buf)?)
+// }
 
 #[cfg(test)]
 mod tests {
-    use crate::calc::evaluate_csv;
+    // use crate::calc::evaluate_csv;
 
     #[test]
     fn reference() {
@@ -64,7 +68,7 @@ mod tests {
 
     fn eval(input: &str) -> String {
         let mut buf = Vec::new();
-        evaluate_csv(input.as_bytes(), &mut buf).unwrap();
+        // evaluate_csv(input.as_bytes(), &mut buf).unwrap();
         String::from_utf8(buf).unwrap()
     }
 }
