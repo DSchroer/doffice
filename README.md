@@ -45,7 +45,9 @@ OPTIONS:
 
 ## Show
 
-Create presentation from markdown file. Split up your slides using `<!-- slide -->`.
+Create presentation from markdown file. 
+Split up your slides using `<!-- slide -->`. 
+Attach a theme file to customize slides.
 
 ### Usage
 
@@ -60,8 +62,9 @@ ARGS:
     <FILE>    
 
 OPTIONS:
+    -d, --dark             Use dark theme base
     -h, --help             Print help information
-    -t, --theme <THEME>    Theme to use for the presentation [white, black] [default: white]
+    -t, --theme <THEME>    CSS theme file to apply to slides
 ```
 
 ### Features

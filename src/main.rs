@@ -30,9 +30,12 @@ enum Commands {
     /// Create slides from markdown
     Show {
         file: String,
-        /// Theme to use for the presentation [white, black]
-        #[clap(short, long, default_value = "white")]
-        theme: Theme
+        /// Use dark theme base
+        #[clap(short, long)]
+        dark: bool,
+        /// CSS theme file to apply to slides
+        #[clap(short, long)]
+        theme: Option<String>
     },
 }
 
@@ -42,6 +45,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     match args.command {
         Commands::Calc { file } => calc::evaluate_csv_file(file),
         Commands::Doc { file } => doc::process_markdown_file(file),
-        Commands::Show { file, theme } => show::slides_from_file(file, theme),
+        Commands::Show { file, dark, theme } => {
+            let base_theme = if dark { Theme::Black } else { Theme::White };
+            show::slides_from_file(file, base_theme, theme)
+        },
     }
 }

@@ -45,7 +45,7 @@ impl Display for ThemeErr {
 }
 impl Error for ThemeErr {}
 
-pub fn slides_from_file(file: String, theme: Theme) -> Result<(), Box<dyn Error>> {
+pub fn slides_from_file(file: String, base_theme: Theme, theme_file: Option<String>) -> Result<(), Box<dyn Error>> {
     let path = Path::new(&file);
 
     let mut out_file = File::options()
@@ -68,9 +68,18 @@ pub fn slides_from_file(file: String, theme: Theme) -> Result<(), Box<dyn Error>
     data.insert("style", include_str!("res/reveal.out.css"));
     data.insert("reveal", include_str!("res/reveal.out.js"));
 
-    match theme {
-        Theme::White => { data.insert("theme", include_str!("res/white.out.css")); },
-        Theme::Black => { data.insert("theme", include_str!("res/black.out.css")); },
+    match base_theme {
+        Theme::White => { data.insert("base_theme", include_str!("res/white.out.css")); },
+        Theme::Black => { data.insert("base_theme", include_str!("res/black.out.css")); },
+    }
+
+    let mut theme = String::new();
+    if let Some(theme_file) = theme_file {
+        let theme_path = Path::new(&theme_file);
+        if let Ok(mut file) = File::open(theme_path) {
+            file.read_to_string(&mut theme)?;
+            data.insert("theme", theme.as_str());
+        }
     }
 
     out_file.write_all(handlebars.render("PRESENTATION", &data)?.as_bytes())?;

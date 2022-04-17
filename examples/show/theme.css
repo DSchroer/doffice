@@ -1,0 +1,17 @@
+@keyframes example {
+    from {transform: rotate(360deg);}
+    to {transform: rotate(0deg);}
+}
+
+.slides > :nth-child(1) * {
+    color: var(--r-background-color);
+}
+
+.slides > :nth-child(2).present {
+    animation-name: example;
+    animation-duration: 1s;
+}
+
+.backgrounds > :first-child .slide-background-content {
+    background-color: white;
+}
