@@ -16,6 +16,10 @@
     font-family: "TSCu_Comic", serif;
 }
 
+.slides img {
+    max-width: 400px;
+}
+
 .slides > :nth-child(2).present {
     animation-name: example;
     animation-duration: 1s;

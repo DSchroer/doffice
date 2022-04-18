@@ -20,6 +20,12 @@ __TODO:_ Syntax Highlights_
 
 <!-- slide -->
 
+## Images
+
+![rust](./logo.png)
+
+<!-- slide -->
+
 ## Smart Tables
 
 ```

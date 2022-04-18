@@ -38,7 +38,7 @@ impl<'a> Command for Slides<'a> {
 
         let handlebars = create_handlebars()?;
 
-        let slides = render_slides(&text, &handlebars)?;
+        let slides = render_slides(&text, &handlebars, Path::new(self.file).parent().unwrap())?;
 
         let mut data = HashMap::new();
         data.insert("slides", slides.as_str());
@@ -68,12 +68,12 @@ impl<'a> Command for Slides<'a> {
     }
 }
 
-fn render_slides(text: &str, handlebars: &Handlebars) -> Result<String, RenderError> {
+fn render_slides(text: &str, handlebars: &Handlebars, root: &Path) -> Result<String, RenderError> {
     let mut rendered_slides = String::new();
     for slide in text.split("<!-- slide -->") {
         let mut data = HashMap::new();
 
-        data.insert("slide", render_markdown(slide));
+        data.insert("slide", render_markdown(slide, root));
 
         rendered_slides += &handlebars.render("SLIDE", &data)?;
     }

@@ -31,7 +31,7 @@ impl<'a> Command for Doc<'a> {
         let mut text = String::new();
         file.read_to_string(&mut text)?;
 
-        let html = render_markdown(&text);
+        let html = render_markdown(&text, Path::new(self.file).parent().unwrap());
 
         let mut data = HashMap::new();
         data.insert("document", html.as_str());
@@ -55,7 +55,7 @@ impl<'a> Command for Doc<'a> {
     }
 }
 
-pub fn render_markdown(input: &str) -> String {
+pub fn render_markdown(input: &str, root: &Path) -> String {
     let mut events: Vec<Event> = Parser::new(input).collect();
 
     for i in 0..events.len() {
@@ -69,6 +69,21 @@ pub fn render_markdown(input: &str) -> String {
             let mut computed = Vec::new();
             evaluate_csv_file(Source::FromString(text), Formatter::Raw(), RunnerConfig::ToData(&mut computed)).unwrap();
             events[i+1] = Event::Text(CowStr::from(String::from_utf8(computed).unwrap()));
+        }
+
+        match &events[i] {
+            Event::Start(Tag::Image(t, url, x)) => {
+                let mut buf = Vec::new();
+                let image_path = root.join(Path::new(&url.clone().into_string()));
+                let ext = image_path.clone();
+                File::open(image_path).unwrap().read_to_end(&mut buf).unwrap();
+
+                let data = base64::encode(buf);
+
+                let image = format!("data:image/{};base64,{}", ext.extension().unwrap().to_str().unwrap(), data);
+                events[i] = Event::Start(Tag::Image(t.clone(), CowStr::from(image), x.clone()))
+            },
+            _ => {}
         }
     }
 
@@ -86,11 +101,12 @@ fn create_handlebars<'a>() -> Result<Handlebars<'a>, TemplateError> {
 
 #[cfg(test)]
 mod tests {
+    use std::path::Path;
     use crate::doc::render_markdown;
 
     #[test]
     fn emits_html() {
-        assert_eq!("<h1>hi</h1>\n", &render_markdown("# hi"));
+        assert_eq!("<h1>hi</h1>\n", &render_markdown("# hi", Path::new("")));
     }
 
     #[test]
@@ -100,6 +116,6 @@ mod tests {
 NUM, NUM
 10,=A2
 ```
-        ".trim()));
+        ".trim(), Path::new("")));
     }
 }
