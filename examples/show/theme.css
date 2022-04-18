@@ -7,6 +7,15 @@
     color: var(--r-background-color);
 }
 
+.slides pre {
+    color: black;
+    background-color: white;
+}
+
+.slides > :nth-child(2) * {
+    font-family: "TSCu_Comic", serif;
+}
+
 .slides > :nth-child(2).present {
     animation-name: example;
     animation-duration: 1s;
