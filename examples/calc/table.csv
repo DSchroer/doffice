@@ -1,0 +1,5 @@
+Name,Price
+Bread,8
+Milk,5.97
+,
+TOTAL,=SUM(B2:B3)
