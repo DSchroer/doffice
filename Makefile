@@ -14,7 +14,8 @@ node_modules:
 
 reveal.js-master:
 	wget https://github.com/hakimel/reveal.js/archive/master.zip
-	unzip -f master.zip
+	rm -rf $@
+	unzip master.zip
 	rm master.zip
 
 src/show/res/reveal.out.js: reveal.js-master
