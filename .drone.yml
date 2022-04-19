@@ -4,5 +4,12 @@ type: docker
 name: build
 
 steps:
+  - name: build and test
+    image: alpine
+    commands:
+      - apk add rust nodejs
+      - make
+      - cargo test
+
   - template: github-mirror
     repo: git@github.com:DSchroer/doffice.git
