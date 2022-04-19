@@ -23,7 +23,7 @@ struct Args {
     #[clap(subcommand)]
     command: Commands,
     /// Watch mode
-    #[clap(short, long)]
+    #[clap(short, long, global = true)]
     watch: bool
 }
 
