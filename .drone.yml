@@ -7,7 +7,7 @@ steps:
   - name: build and test
     image: alpine
     commands:
-      - apk add rust nodejs make
+      - apk add rust nodejs make wget
       - make
       - cargo test
 
