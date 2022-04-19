@@ -4,7 +4,36 @@
 
 Theme & Animation Support
 
+<!-- slide[two-column] -->
+
+# Custom Layouts
+
+<div>
+
+Column A
+- Important
+- Things
+- Here
+
+</div>
+
+<div>
+
+Column B
+1. Even 
+2. More
+3. Stuff
+
+</div>
+
 <!-- slide -->
+
+# Embed Videos
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/HnV5h0kqk7Q" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+</iframe>
+
+<!--slide-->
 
 ## Code Snippets
 

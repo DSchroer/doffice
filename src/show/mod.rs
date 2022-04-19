@@ -45,7 +45,7 @@ impl Presentation {
     }
 
     pub fn slides(&self) -> Result<IntoIter<Slide>, Box<dyn Error>> {
-        let pattern = Regex::new(r"<!--\s*slide(?:\[(\w+)?\])?\s*-->")?;
+        let pattern = Regex::new(r"<!--\s*slide(?:\[([-\w]+)?\])?\s*-->")?;
         let path: Option<&Path> = match &self.path {
             None => None,
             Some(p) => Some(p)
