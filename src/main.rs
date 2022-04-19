@@ -8,6 +8,7 @@ mod html;
 
 use std::error::Error;
 use std::path::{Path, PathBuf};
+use std::process::exit;
 use clap::{Parser, Subcommand};
 use crate::calc::{Calc, CsvPrinter};
 use crate::doc::Doc;
@@ -61,10 +62,10 @@ pub enum CalcFormat {
     Csv,
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() {
     let mut args = Args::parse();
 
-    match &args.command {
+    let res = match &args.command {
         Commands::Calc { file, theme, format } => {
             let calc = Calc::from_file(file.clone());
             match format {
@@ -92,6 +93,14 @@ fn main() -> Result<(), Box<dyn Error>> {
             let slides = Slides::new(Path::new(&file));
             run_command(&args, slides, printer)
         },
+    };
+
+    match res {
+        Ok(_) => {}
+        Err(e) => {
+            println!("ERROR: {}", e);
+            exit(1);
+        }
     }
 }
 
