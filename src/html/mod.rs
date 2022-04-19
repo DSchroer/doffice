@@ -12,7 +12,7 @@ use crate::doc::Document;
 use crate::framework::Printer;
 use crate::show::Presentation;
 
-const SLIDE: &str = "<section>{{{ slide }}}</section>";
+const SLIDE: &str = "<section class=\"{{layout}}\">{{{ slide }}}</section>";
 const WATCHER: &str = "new EventSource('/watch').addEventListener('reload', () => window.location.reload());";
 
 pub struct HtmlPrinter {
@@ -92,12 +92,18 @@ impl Printer<Presentation> for HtmlPrinter {
         let mut data = HashMap::new();
 
         let mut slides = String::new();
-        for slide in presentation.slides() {
+        for slide in presentation.slides()? {
             let mut slide_data = HashMap::new();
 
             let mut buffer = Vec::new();
             html::write_html(&mut buffer, slide.elements()?)?;
-            slide_data.insert("slide", String::from_utf8(buffer)?);
+            let slide_html = String::from_utf8(buffer)?;
+            slide_data.insert("slide", slide_html.as_str());
+
+            if let Some(layout) = slide.layout() {
+                slide_data.insert("layout", layout);
+            }
+
             let rendered_slide = handlebars.render("SLIDE", &slide_data)?;
 
             writeln!(slides, "{}", rendered_slide)?;

@@ -1,6 +1,6 @@
-# DOffice Demo 😊
+# DOffice Demo
 
-<!-- slide -->
+<!-- slide[animate] -->
 
 Theme & Animation Support
 
