@@ -23,10 +23,6 @@ pub struct Document {
 }
 
 impl Document {
-    pub fn new(source: &str) -> Self {
-        Document { source: String::from(source), path: None }
-    }
-
     pub fn elements(&self) -> Result<IntoIter<Event>, Box<dyn Error>> {
         render_markdown(&self.source, match &self.path {
             Some(p) => Some(&p),
@@ -92,6 +88,12 @@ pub fn render_markdown<'a>(input: &'a str, root: Option<&Path>) -> Result<IntoIt
 mod tests {
     use pulldown_cmark::html;
     use crate::doc::{Document};
+
+    impl Document {
+        pub fn new(source: &str) -> Self {
+            Document { source: String::from(source), path: None }
+        }
+    }
 
     #[test]
     fn emits_html() {

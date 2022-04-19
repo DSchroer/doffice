@@ -39,10 +39,6 @@ pub struct Table {
 }
 
 impl Table {
-    pub fn new(cells: Vec<Cell>) -> Self {
-        Table{ cells }
-    }
-
     pub fn cells(&self) -> Iter<'_, Cell> {
         self.cells.iter()
     }
@@ -91,8 +87,15 @@ impl Printer<Table> for CsvPrinter {
 
 #[cfg(test)]
 mod tests {
-    use crate::calc::{Calc, CsvPrinter};
+    use crate::calc::{Calc, CsvPrinter, Table};
+    use crate::calc::engine::Cell;
     use crate::framework::{Loader, Printer};
+
+    impl Table {
+        pub fn new(cells: Vec<Cell>) -> Self {
+            Table{ cells }
+        }
+    }
 
     #[test]
     fn reference() {

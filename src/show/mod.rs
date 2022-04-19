@@ -40,10 +40,6 @@ impl<'a> Slide<'a> {
 }
 
 impl Presentation {
-    pub fn new(source: &str) -> Self {
-        Presentation{ source: String::from(source), path: None }
-    }
-
     pub fn slides(&self) -> Result<IntoIter<Slide>, Box<dyn Error>> {
         let pattern = Regex::new(r"<!--\s*slide(?:\[([-\w]+)?\])?\s*-->")?;
         let path: Option<&Path> = match &self.path {
@@ -99,6 +95,12 @@ impl<'a> Loader for Slides<'a> {
 #[cfg(test)]
 mod tests {
     use crate::show::{Presentation};
+
+    impl Presentation {
+        pub fn new(source: &str) -> Self {
+            Presentation{ source: String::from(source), path: None }
+        }
+    }
 
     #[test]
     fn renders_single_slide() {
