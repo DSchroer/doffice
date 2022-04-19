@@ -27,7 +27,7 @@ impl Document {
         Document { source: String::from(source), path: None }
     }
 
-    pub fn elements(&self) -> IntoIter<Event> {
+    pub fn elements(&self) -> Result<IntoIter<Event>, Box<dyn Error>> {
         render_markdown(&self.source, match &self.path {
             Some(p) => Some(&p),
             None => None
@@ -48,7 +48,7 @@ impl<'a> Loader for Doc<'a> {
     }
 }
 
-pub fn render_markdown<'a>(input: &'a str, root: Option<&Path>) -> IntoIter<Event<'a>> {
+pub fn render_markdown<'a>(input: &'a str, root: Option<&Path>) -> Result<IntoIter<Event<'a>>, Box<dyn Error>> {
     let mut events: Vec<Event> = Parser::new(input).collect();
 
     for i in 0..events.len() {
@@ -61,9 +61,9 @@ pub fn render_markdown<'a>(input: &'a str, root: Option<&Path>) -> IntoIter<Even
 
             let csv = Calc::from_string(text);
             let printer = CsvPrinter::new();
-            let computed = print_to_vec(csv, printer).unwrap();
+            let computed = print_to_vec(csv, printer)?;
 
-            events[i+1] = Event::Text(CowStr::from(String::from_utf8(computed).unwrap()));
+            events[i+1] = Event::Text(CowStr::from(String::from_utf8(computed)?));
         }
 
         if let Some(root) = root {
@@ -72,7 +72,7 @@ pub fn render_markdown<'a>(input: &'a str, root: Option<&Path>) -> IntoIter<Even
                     let mut buf = Vec::new();
                     let image_path = root.join(Path::new(&url.clone().into_string()));
                     let ext = image_path.clone();
-                    File::open(image_path).unwrap().read_to_end(&mut buf).unwrap();
+                    File::open(image_path)?.read_to_end(&mut buf)?;
 
                     let data = base64::encode(buf);
 
@@ -84,7 +84,7 @@ pub fn render_markdown<'a>(input: &'a str, root: Option<&Path>) -> IntoIter<Even
         }
     }
 
-    events.into_iter()
+    Ok(events.into_iter())
 }
 
 #[cfg(test)]
@@ -115,7 +115,7 @@ NUM, NUM
     fn render(input: &str) -> String {
         let doc = Document::new(input);
         let mut buf = Vec::new();
-        html::write_html(&mut buf, doc.elements()).unwrap();
+        html::write_html(&mut buf, doc.elements().unwrap()).unwrap();
         String::from_utf8(buf).unwrap()
     }
 }

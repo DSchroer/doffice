@@ -28,7 +28,7 @@ pub struct Slide<'a> {
 }
 
 impl<'a> Slide<'a> {
-    pub fn elements(&self) -> IntoIter<Event> {
+    pub fn elements(&self) -> Result<IntoIter<Event>, Box<dyn Error>> {
         render_markdown(self.md, self.path)
     }
 }

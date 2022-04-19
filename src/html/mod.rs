@@ -62,8 +62,7 @@ impl Printer<Document> for HtmlPrinter {
         let mut data = HashMap::new();
 
         let mut buffer = Vec::new();
-        let elements = document.elements();
-        html::write_html(&mut buffer, elements)?;
+        html::write_html(&mut buffer, document.elements()?)?;
 
         let document_str = String::from_utf8(buffer)?;
         data.insert("document", document_str.as_str());
@@ -97,7 +96,7 @@ impl Printer<Presentation> for HtmlPrinter {
             let mut slide_data = HashMap::new();
 
             let mut buffer = Vec::new();
-            html::write_html(&mut buffer, slide.elements())?;
+            html::write_html(&mut buffer, slide.elements()?)?;
             slide_data.insert("slide", String::from_utf8(buffer)?);
             let rendered_slide = handlebars.render("SLIDE", &slide_data)?;
 

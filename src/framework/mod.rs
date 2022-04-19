@@ -18,25 +18,24 @@ pub trait Printer<T> {
     fn print(&self, value: T) -> Result<Vec<u8>, Box<dyn Error>>;
 }
 
-pub fn print_to_vec<TResult, TLoader: Loader<Result=TResult>, TPrinter: Printer<TResult>>(command: TLoader, printer: TPrinter) -> Result<Vec<u8>, Box<dyn Error>> {
-    printer.print(command.load()?)
+pub fn print_to_vec<T>(loader: impl Loader<Result=T>, printer: impl Printer<T>) -> Result<Vec<u8>, Box<dyn Error>> {
+    printer.print(loader.load()?)
 }
 
-pub fn print_to_file<TResult, TLoader: Loader<Result=TResult>, TPrinter: Printer<TResult>>(command: TLoader, printer: TPrinter, path: &Path) -> Result<(), Box<dyn Error>> {
+pub fn print_to_file<T>(loader: impl Loader<Result=T>, printer: impl Printer<T>, path: &Path) -> Result<(), Box<dyn Error>> {
     let mut out_file = File::options()
         .write(true)
         .truncate(true)
         .create(true)
         .open(path)?;
 
-    let value = command.load()?;
+    let value = loader.load()?;
     let printed = printer.print(value)?;
     out_file.write_all(&printed)?;
     Ok(())
 }
 
-pub fn print_to_web<TResult, TLoader: Loader<Result=TResult>, TPrinter: Printer<TResult>>
-    (command: TLoader, printer: TPrinter, port: u32, paths: Vec<String>) -> Result<(), Box<dyn Error>>  {
+pub fn print_to_web<T>(loader: impl Loader<Result=T>, printer: impl Printer<T>, port: u32, paths: Vec<String>) -> Result<(), Box<dyn Error>>  {
     let addr = format!("localhost:{}", port);
     let server = Server::http(&addr).unwrap();
     println!("server listening at http://{}/", addr);
@@ -44,7 +43,7 @@ pub fn print_to_web<TResult, TLoader: Loader<Result=TResult>, TPrinter: Printer<
     for request in server.incoming_requests() {
         match request.url().trim_end_matches("/") {
             "/watch" => watcher(paths.clone(), request),
-            "" => request.respond(render(&command, &printer)?)?,
+            "" => request.respond(render(&loader, &printer)?)?,
             _ => request.respond(Response::empty(404))?,
         }
     }
@@ -59,9 +58,8 @@ fn watcher(paths: Vec<String>, request: Request) {
     });
 }
 
-fn render<TResult, TLoader: Loader<Result=TResult>, TPrinter: Printer<TResult>>
-    (command: &TLoader, printer: &TPrinter) -> Result<Response<Cursor<Vec<u8>>>, Box<dyn Error>> {
-    let value = command.load()?;
+fn render<T>(loader: &impl Loader<Result=T>, printer: &impl Printer<T>) -> Result<Response<Cursor<Vec<u8>>>, Box<dyn Error>> {
+    let value = loader.load()?;
     let printed = printer.print(value)?;
 
     let mut response = Response::from_data(printed);
