@@ -10,7 +10,7 @@ node_modules:
 	npm i
 
 reveal.js-master:
-	wget https://github.com/hakimel/reveal.js/archive/master.zip
+	curl https://github.com/hakimel/reveal.js/archive/master.zip -L -o master.zip
 	rm -rf $@
 	unzip master.zip
 	rm master.zip
