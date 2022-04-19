@@ -7,7 +7,8 @@ steps:
   - name: build and test
     image: alpine
     commands:
-      - apk add rust cargo nodejs make curl unzip
+      - apk add rustup nodejs make curl unzip
+      - rustup install latest
       - cargo build
       - cargo test
 
