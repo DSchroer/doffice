@@ -2,47 +2,56 @@ mod operators;
 mod engine;
 mod reader;
 
-use std::collections::HashMap;
 use std::error::Error;
 use std::fs::File;
-use std::io::{BufReader, Read, Write};
-use std::path::Path;
+use std::io::Write;
+use std::io::{BufReader, Read};
+use std::slice::Iter;
 use std::string::String;
-use handlebars::{Handlebars, TemplateError};
 
 use operators::{*};
 use engine::CSVEngine;
 use reader::CSVReader;
-use crate::framework::{Command, Runner, RunnerConfig};
-
-const WATCHER: &str = "new EventSource('/watch').addEventListener('reload', () => window.location.reload());";
-
-pub fn evaluate_csv_file(source: Source, formatter: Formatter, config: RunnerConfig) -> Result<(), Box<dyn Error>> {
-    let runner = Runner::new(Calc{ source, formatter });
-    runner.exec(config)
-}
+use crate::calc::engine::Cell;
+use crate::framework::{Loader, Printer};
 
 pub enum Source {
     FromFile(String),
     FromString(String)
 }
 
-pub enum Formatter {
-    Raw(),
-    Html{
-        watch: bool,
-        theme_file: Option<String>
+pub struct Calc {
+    source: Source,
+}
+
+impl Calc {
+    pub fn from_file(path: String) -> Self {
+        Calc{ source: Source::FromFile(path) }
+    }
+
+    pub fn from_string(source: String) -> Self {
+        Calc{ source: Source::FromString(source) }
     }
 }
 
-struct Calc {
-    source: Source,
-    formatter: Formatter
+pub struct Table {
+    cells: Vec<Cell>
 }
 
-impl Command for Calc {
-    fn execute(&self, writer: &mut impl Write) -> Result<(), Box<dyn Error>> {
+impl Table {
+    pub fn new(cells: Vec<Cell>) -> Self {
+        Table{ cells }
+    }
 
+    pub fn cells(&self) -> Iter<'_, Cell> {
+        self.cells.iter()
+    }
+}
+
+impl Loader for Calc {
+    type Result = Table;
+
+    fn load(&self) -> Result<Table, Box<dyn Error>> {
         let mut engine =  match &self.source {
             Source::FromFile(path) => CSVEngine::new(CSVReader::new(BufReader::new(File::open(path)?).bytes())),
             Source::FromString(data) => CSVEngine::new(CSVReader::new(BufReader::new(data.as_bytes()).bytes())),
@@ -52,67 +61,50 @@ impl Command for Calc {
         engine.register_operator(Count{});
         engine.register_operator(Average{});
 
-        let mut buffer = Vec::new();
-        for cell in engine {
-            write!(buffer, "{}", cell)?;
-        }
-
-        match &self.formatter {
-            Formatter::Raw() => {
-                writer.write_all(&buffer)?;
-            }
-            Formatter::Html { watch, theme_file } => {
-                let table = String::from_utf8(buffer)?;
-
-                let mut data = HashMap::new();
-                data.insert("table", table.as_str());
-
-                if *watch {
-                    data.insert("watcher", WATCHER);
-                }
-
-                let mut theme = String::new();
-                if let Some(theme_file) = theme_file {
-                    let theme_path = Path::new(&theme_file);
-                    if let Ok(mut file) = File::open(theme_path) {
-                        file.read_to_string(&mut theme)?;
-                        data.insert("theme", theme.as_str());
-                    }
-                }
-
-                let handlebars = create_handlebars()?;
-                writer.write_all(handlebars.render("SHEET", &data)?.as_bytes())?;
-            }
-        }
-
-        Ok(())
+        Ok(Table {
+            cells: engine.collect()
+        })
     }
 }
 
-fn create_handlebars<'a>() -> Result<Handlebars<'a>, TemplateError> {
-    let mut handlebars = Handlebars::new();
-    handlebars.register_template_string("SHEET", include_str!("res/template.hbs"))?;
-    Ok(handlebars)
+pub struct CsvPrinter;
+
+impl CsvPrinter {
+    pub fn new() -> Self {
+        CsvPrinter
+    }
+}
+
+impl Printer<Table> for CsvPrinter {
+    fn print(&self, table: Table) -> Result<Vec<u8>, Box<dyn Error>> {
+        let mut buffer = Vec::new();
+        for cell in table.cells() {
+            write!(&mut buffer, "{}", cell)?;
+        }
+        Ok(buffer)
+    }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::calc::{Calc, CsvPrinter};
+    use crate::framework::{Loader, Printer};
 
     #[test]
     fn reference() {
-        assert_eq!("0,0", eval("0,=A1"));
+        assert_eq!("0,0.00", eval("0,=A1"));
     }
 
     #[test]
     fn operators() {
-        assert_eq!("1,2,3,6", eval("1,2,3,=SUM(A1:C1)"));
-        assert_eq!("1,2,3,3", eval("1,2,3,=COUNT(A1:C1)"));
-        assert_eq!("1,2,3,2", eval("1,2,3,=AVERAGE(A1:C1)"));
+        assert_eq!("1,2,3,6.00", eval("1,2,3,=SUM(A1:C1)"));
+        assert_eq!("1,2,3,3.00", eval("1,2,3,=COUNT(A1:C1)"));
+        assert_eq!("1,2,3,2.00", eval("1,2,3,=AVERAGE(A1:C1)"));
     }
 
     fn eval(input: &str) -> String {
-        let mut buf = Vec::new();
-        // evaluate_csv(input.as_bytes(), &mut buf).unwrap();
-        String::from_utf8(buf).unwrap()
+        let table = Calc::from_string(input.to_string()).load().unwrap();
+        let printer = CsvPrinter::new();
+        String::from_utf8(printer.print(table).unwrap()).unwrap()
     }
 }

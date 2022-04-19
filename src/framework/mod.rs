@@ -1,6 +1,7 @@
 use std::error::Error;
 use std::fs::File;
 use std::io::{Cursor, Write};
+use std::path::Path;
 use std::sync::mpsc::{channel};
 use std::thread;
 use std::thread::sleep;
@@ -8,80 +9,66 @@ use std::time::Duration;
 use notify::{Op, raw_watcher, RecursiveMode, Watcher};
 use tiny_http::{Request, Response, Server, StatusCode};
 
-pub trait Command {
-    fn execute(&self, writer: &mut impl Write) -> Result<(), Box<dyn Error>>;
+pub trait Loader {
+    type Result;
+    fn load(&self) -> Result<Self::Result, Box<dyn Error>>;
 }
 
-pub struct Runner<T>{
-    command: T,
+pub trait Printer<T> {
+    fn print(&self, value: T) -> Result<Vec<u8>, Box<dyn Error>>;
 }
 
-pub enum RunnerConfig<'a> {
-    ToFile(String),
-    ToData(&'a mut Vec<u8>),
-    Watch(u32, Vec<String>)
+pub fn print_to_vec<TResult, TLoader: Loader<Result=TResult>, TPrinter: Printer<TResult>>(command: TLoader, printer: TPrinter) -> Result<Vec<u8>, Box<dyn Error>> {
+    printer.print(command.load()?)
 }
 
-impl<T: Command> Runner<T> {
-    pub fn new(command: T) -> Self {
-        Runner{ command }
-    }
+pub fn print_to_file<TResult, TLoader: Loader<Result=TResult>, TPrinter: Printer<TResult>>(command: TLoader, printer: TPrinter, path: &Path) -> Result<(), Box<dyn Error>> {
+    let mut out_file = File::options()
+        .write(true)
+        .truncate(true)
+        .create(true)
+        .open(path)?;
 
-    pub fn exec<'a>(&self, config: RunnerConfig<'a>) -> Result<(), Box<dyn Error>> {
-        match config {
-            RunnerConfig::ToFile(path) => self.exec_file(&path),
-            RunnerConfig::Watch(port, paths) => self.exec_watch(&port, paths),
-            RunnerConfig::ToData(buffer) => self.exec_str(buffer),
+    let value = command.load()?;
+    let printed = printer.print(value)?;
+    out_file.write_all(&printed)?;
+    Ok(())
+}
+
+pub fn print_to_web<TResult, TLoader: Loader<Result=TResult>, TPrinter: Printer<TResult>>
+    (command: TLoader, printer: TPrinter, port: u32, paths: Vec<String>) -> Result<(), Box<dyn Error>>  {
+    let addr = format!("localhost:{}", port);
+    let server = Server::http(&addr).unwrap();
+    println!("server listening at http://{}/", addr);
+
+    for request in server.incoming_requests() {
+        match request.url().trim_end_matches("/") {
+            "/watch" => watcher(paths.clone(), request),
+            "" => request.respond(render(&command, &printer)?)?,
+            _ => request.respond(Response::empty(404))?,
         }
     }
+    Ok(())
+}
 
-    fn exec_str(&self, buffer: &mut Vec<u8>) -> Result<(), Box<dyn Error>>{
-        self.command.execute(buffer)
-    }
-
-    fn exec_file(&self, path: &str) -> Result<(), Box<dyn Error>> {
-        let mut out_file = File::options()
-            .write(true)
-            .truncate(true)
-            .create(true)
-            .open(path)?;
-
-        self.command.execute(&mut out_file)
-    }
-
-    fn exec_watch(&self, port: &u32, paths: Vec<String>) -> Result<(), Box<dyn Error>>  {
-        let addr = format!("localhost:{}", port);
-        let server = Server::http(&addr).unwrap();
-        println!("server listening at http://{}/", addr);
-
-        for request in server.incoming_requests() {
-            match request.url().trim_end_matches("/") {
-                "/watch" => self.watcher(paths.clone(), request),
-                "" => request.respond(self.render()?)?,
-                _ => request.respond(Response::empty(404))?,
-            }
+fn watcher(paths: Vec<String>, request: Request) {
+    thread::spawn(move || {
+        match event_stream(paths, request) {
+            _ => {}
         }
-        Ok(())
-    }
+    });
+}
 
-    fn watcher(&self, paths: Vec<String>, request: Request) {
-        thread::spawn(move || {
-            match event_stream(paths, request) {
-                _ => {}
-            }
-        });
-    }
+fn render<TResult, TLoader: Loader<Result=TResult>, TPrinter: Printer<TResult>>
+    (command: &TLoader, printer: &TPrinter) -> Result<Response<Cursor<Vec<u8>>>, Box<dyn Error>> {
+    let value = command.load()?;
+    let printed = printer.print(value)?;
 
-    fn render(&self) -> Result<Response<Cursor<Vec<u8>>>, Box<dyn Error>> {
-        let mut buffer = Vec::new();
-        self.command.execute(&mut buffer)?;
+    let mut response = Response::from_data(printed);
+    let header = tiny_http::Header::from_bytes(&b"Content-Type"[..], &b"text/html"[..]).unwrap();
+    response.add_header(header);
 
-        let mut response = Response::from_data(buffer);
-        let header = tiny_http::Header::from_bytes(&b"Content-Type"[..], &b"text/html"[..]).unwrap();
-        response.add_header(header);
-
-        Ok(response)
-    }
+    Ok(response)
 }
 
 fn event_stream(paths: Vec<String>, request: Request) -> Result<(), Box<dyn Error>> {

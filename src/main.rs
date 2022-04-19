@@ -4,13 +4,16 @@ mod calc;
 mod doc;
 mod show;
 mod framework;
+mod html;
 
 use std::error::Error;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use clap::{Parser, Subcommand};
-use crate::calc::{Formatter, Source};
-use crate::framework::RunnerConfig;
-use crate::show::Theme;
+use crate::calc::{Calc};
+use crate::doc::Doc;
+use crate::framework::{Printer, Loader, print_to_file, print_to_web};
+use crate::html::HtmlPrinter;
+use crate::show::{Slides};
 
 #[derive(Parser)]
 #[clap(author, version)]
@@ -43,9 +46,6 @@ enum Commands {
     /// Create slides from markdown
     Show {
         file: String,
-        /// Use dark theme base
-        #[clap(short, long)]
-        dark: bool,
         /// CSS theme file to apply to slides
         #[clap(short, long)]
         theme: Option<String>
@@ -55,33 +55,73 @@ enum Commands {
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
 
-    match args.command {
+    match &args.command {
         Commands::Calc { file, theme } => {
-            let config = config(args.watch, &file, "html", &theme);
-            let format = Formatter::Html { watch: args.watch, theme_file: theme };
-            calc::evaluate_csv_file(Source::FromFile(file), format, config)
+            let printer = HtmlPrinter::new(args.watch, theme.clone());
+            let calc = Calc::from_file(file.clone());
+            run_command(&args, calc, printer)
         },
         Commands::Doc { file, theme } => {
-            let config = config(args.watch, &file, "html", &theme);
-            doc::process_markdown_file(file, theme, config)
+            let printer = HtmlPrinter::new(args.watch, theme.clone());
+            let doc = Doc::new(Path::new(&file));
+            run_command(&args, doc, printer)
         },
-        Commands::Show { file, dark, theme } => {
-            let config = config(args.watch, &file, "html", &theme);
-            let base_theme = if dark { Theme::Black } else { Theme::White };
-            show::slides_from_file(file, base_theme, theme, config)
+        Commands::Show { file, theme } => {
+            let printer = HtmlPrinter::new(args.watch, theme.clone());
+            let slides = Slides::new(Path::new(&file));
+            run_command(&args, slides, printer)
         },
     }
 }
 
-fn config<'a>(watch: bool, file: &str, ext: &str, theme: &Option<String>) -> RunnerConfig<'a>{
-    let outfile = &Path::new(file).with_extension(format!("out.{}", ext));
-    if watch {
-        let mut paths = vec![String::from(file)];
-        if let Some(theme_path) = theme {
-            paths.push(theme_path.clone());
-        }
-        RunnerConfig::Watch(8080, paths)
-    } else {
-        RunnerConfig::ToFile(String::from(outfile.to_str().unwrap()))
+fn run_command<T>(args: &Args, loader: impl Loader<Result=T>, printer: impl Printer<T>) -> Result<(), Box<dyn Error>> {
+    let watch_paths = watch_paths(&args.command);
+
+    if args.watch {
+        print_to_web(loader, printer, 8080, watch_paths)
+    }else {
+        let outfile = out_file(&args.command);
+        print_to_file(loader, printer, &outfile)
     }
+}
+
+fn out_file(command: &Commands) -> PathBuf {
+    match command {
+        Commands::Calc { file, .. } => {
+            Path::new(&file).with_extension("out.html")
+        }
+        Commands::Doc { file, .. } => {
+            Path::new(&file).with_extension("out.html")
+        }
+        Commands::Show { file, .. } => {
+            Path::new(&file).with_extension("out.html")
+        }
+    }
+}
+
+fn watch_paths(command: &Commands) -> Vec<String>{
+    let mut paths = Vec::new();
+
+    match command {
+        Commands::Calc { file, theme, .. } => {
+            paths.push(file.clone());
+            if let Some(theme) = theme {
+                paths.push(theme.clone())
+            }
+        }
+        Commands::Doc { file, theme, .. } => {
+            paths.push(file.clone());
+            if let Some(theme) = theme {
+                paths.push(theme.clone())
+            }
+        }
+        Commands::Show { file, theme, .. } => {
+            paths.push(file.clone());
+            if let Some(theme) = theme {
+                paths.push(theme.clone())
+            }
+        }
+    };
+
+    paths
 }
