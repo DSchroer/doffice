@@ -57,6 +57,7 @@ impl<'a> Loader for Slides<'a> {
         let mut text = String::new();
         file.read_to_string(&mut text)?;
 
-        Ok(Presentation{ source: text, path: Some(self.file.to_path_buf()) })
+        let directory = self.file.parent().unwrap().to_path_buf();
+        Ok(Presentation{ source: text, path: Some(directory) })
     }
 }

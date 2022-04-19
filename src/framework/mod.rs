@@ -43,7 +43,7 @@ pub fn print_to_web<T>(loader: impl Loader<Result=T>, printer: impl Printer<T>, 
     for request in server.incoming_requests() {
         match request.url().trim_end_matches("/") {
             "/watch" => watcher(paths.clone(), request),
-            "" => request.respond(render(&loader, &printer)?)?,
+            "" => request.respond(render(loader.load()?, &printer)?)?,
             _ => request.respond(Response::empty(404))?,
         }
     }
@@ -58,12 +58,11 @@ fn watcher(paths: Vec<String>, request: Request) {
     });
 }
 
-fn render<T>(loader: &impl Loader<Result=T>, printer: &impl Printer<T>) -> Result<Response<Cursor<Vec<u8>>>, Box<dyn Error>> {
-    let value = loader.load()?;
+fn render<T>(value: T, printer: &impl Printer<T>) -> Result<Response<Cursor<Vec<u8>>>, Box<dyn Error>> {
     let printed = printer.print(value)?;
 
     let mut response = Response::from_data(printed);
-    let header = tiny_http::Header::from_bytes(&b"Content-Type"[..], &b"text/html"[..]).unwrap();
+    let header = tiny_http::Header::from_bytes(&b"Content-Type"[..], &b"text/html; charset=utf-8"[..]).unwrap();
     response.add_header(header);
 
     Ok(response)
@@ -109,5 +108,24 @@ fn event_stream(paths: Vec<String>, request: Request) -> Result<(), Box<dyn Erro
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use std::io::{Read};
+    use crate::doc::Document;
+    use crate::framework::render;
+    use crate::HtmlPrinter;
 
+    #[test]
+    fn render_supports_utf8() {
+        let doc = Document::new("😊");
+        let printer = HtmlPrinter::new(false, None);
+        let response = render(doc, &printer).unwrap();
+
+        let mut buffer: Vec<u8> = Vec::new();
+        response.into_reader().read_to_end(&mut buffer).unwrap();
+
+        let data = String::from_utf8(buffer).unwrap();
+        assert!(data.contains("😊"))
+    }
+}
 

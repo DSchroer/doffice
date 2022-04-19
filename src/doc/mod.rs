@@ -44,7 +44,8 @@ impl<'a> Loader for Doc<'a> {
         let mut text = String::new();
         file.read_to_string(&mut text)?;
 
-        Ok(Document{ source: text, path: Some(self.file.to_path_buf()) })
+        let directory = self.file.parent().unwrap().to_path_buf();
+        Ok(Document{ source: text, path: Some(directory) })
     }
 }
 
