@@ -8,6 +8,7 @@ steps:
     image: alpine
     commands:
       - apk add rust nodejs make curl unzip
+      - curl https://github.com/hakimel/reveal.js/archive/master.zip -VL -o master.zip
       - make
       - cargo test
 
