@@ -55,6 +55,16 @@ __TODO:_ Syntax Highlights_
 
 <!-- slide -->
 
+# Fragments
+
+<div class="fragment">
+
+## WOW!
+
+</div>
+
+<!-- slide -->
+
 ## Smart Tables
 
 ```
