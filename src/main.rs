@@ -9,7 +9,7 @@ mod html;
 use std::error::Error;
 use std::path::{Path, PathBuf};
 use clap::{Parser, Subcommand};
-use crate::calc::{Calc};
+use crate::calc::{Calc, CsvPrinter};
 use crate::doc::Doc;
 use crate::framework::{Printer, Loader, print_to_file, print_to_web};
 use crate::html::HtmlPrinter;
@@ -34,7 +34,10 @@ enum Commands {
         file: String,
         /// CSS theme file to apply to tables
         #[clap(short, long)]
-        theme: Option<String>
+        theme: Option<String>,
+        /// Output file format
+        #[clap(short, long, arg_enum, default_value = "csv")]
+        format: CalcFormat
     },
     /// Process markdown document
     Doc {
@@ -52,14 +55,32 @@ enum Commands {
     },
 }
 
+#[derive(clap::ArgEnum, Clone)]
+pub enum CalcFormat {
+    Html,
+    Csv,
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
-    let args = Args::parse();
+    let mut args = Args::parse();
 
     match &args.command {
-        Commands::Calc { file, theme } => {
-            let printer = HtmlPrinter::new(args.watch, theme.clone());
+        Commands::Calc { file, theme, format } => {
             let calc = Calc::from_file(file.clone());
-            run_command(&args, calc, printer)
+            match format {
+                CalcFormat::Html => {
+                    let printer = HtmlPrinter::new(args.watch, theme.clone());
+                    run_command(&args, calc, printer)
+                },
+                CalcFormat::Csv => {
+                    if args.watch {
+                        println!("WARNING: csv format does not support watch mode");
+                        args.watch = false;
+                    }
+                    let printer = CsvPrinter::new();
+                    run_command(&args, calc, printer)
+                }
+            }
         },
         Commands::Doc { file, theme } => {
             let printer = HtmlPrinter::new(args.watch, theme.clone());
@@ -74,27 +95,27 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 }
 
-fn run_command<T>(args: &Args, loader: impl Loader<Result=T>, printer: impl Printer<T>) -> Result<(), Box<dyn Error>> {
+fn run_command<T, TPrinter: Printer<T>>(args: &Args, loader: impl Loader<Result=T>, printer: TPrinter) -> Result<(), Box<dyn Error>> {
     let watch_paths = watch_paths(&args.command);
 
     if args.watch {
         print_to_web(loader, printer, 8080, watch_paths)
     }else {
-        let outfile = out_file(&args.command);
+        let outfile = out_file(&args.command, <TPrinter>::extension());
         print_to_file(loader, printer, &outfile)
     }
 }
 
-fn out_file(command: &Commands) -> PathBuf {
+fn out_file(command: &Commands, extension: &str) -> PathBuf {
     match command {
         Commands::Calc { file, .. } => {
-            Path::new(&file).with_extension("out.html")
+            Path::new(&file).with_extension(format!("out.{}", extension))
         }
         Commands::Doc { file, .. } => {
-            Path::new(&file).with_extension("out.html")
+            Path::new(&file).with_extension(format!("out.{}", extension))
         }
         Commands::Show { file, .. } => {
-            Path::new(&file).with_extension("out.html")
+            Path::new(&file).with_extension(format!("out.{}", extension))
         }
     }
 }

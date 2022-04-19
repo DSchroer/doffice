@@ -16,6 +16,7 @@ pub trait Loader {
 
 pub trait Printer<T> {
     fn print(&self, value: T) -> Result<Vec<u8>, Box<dyn Error>>;
+    fn extension() -> &'static str;
 }
 
 pub fn print_to_vec<T>(loader: impl Loader<Result=T>, printer: impl Printer<T>) -> Result<Vec<u8>, Box<dyn Error>> {

@@ -83,6 +83,10 @@ impl Printer<Table> for CsvPrinter {
         }
         Ok(buffer)
     }
+
+    fn extension() -> &'static str {
+        "csv"
+    }
 }
 
 #[cfg(test)]

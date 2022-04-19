@@ -55,6 +55,10 @@ impl Printer<Table> for HtmlPrinter {
         let handlebars = create_handlebars()?;
         Ok(handlebars.render("SHEET", &data)?.as_bytes().to_vec())
     }
+
+    fn extension() -> &'static str {
+        "html"
+    }
 }
 
 impl Printer<Document> for HtmlPrinter {
@@ -82,6 +86,10 @@ impl Printer<Document> for HtmlPrinter {
 
         let handlebars = create_handlebars()?;
         Ok(handlebars.render("DOCUMENT", &data)?.as_bytes().to_vec())
+    }
+
+    fn extension() -> &'static str {
+        "html"
     }
 }
 
@@ -128,6 +136,10 @@ impl Printer<Presentation> for HtmlPrinter {
         }
 
         Ok(handlebars.render("SLIDES", &data)?.as_bytes().to_vec())
+    }
+
+    fn extension() -> &'static str {
+        "html"
     }
 }
 
