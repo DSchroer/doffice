@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 use std::process::exit;
 use clap::{Parser, Subcommand};
 use crate::calc::{Calc, CsvPrinter};
-use crate::doc::Doc;
+use crate::doc::{Doc, MarkdownPrinter};
 use crate::framework::{Printer, Loader, print_to_file, print_to_web};
 use crate::html::HtmlPrinter;
 use crate::show::{Slides};
@@ -45,7 +45,10 @@ enum Commands {
         file: String,
         /// CSS theme file to apply to the document
         #[clap(short, long)]
-        theme: Option<String>
+        theme: Option<String>,
+        /// Output file format
+        #[clap(short, long, arg_enum, default_value = "html")]
+        format: DocFormat
     },
     /// Create slides from markdown
     Show {
@@ -60,6 +63,12 @@ enum Commands {
 pub enum CalcFormat {
     Html,
     Csv,
+}
+
+#[derive(clap::ArgEnum, Clone)]
+pub enum DocFormat {
+    Html,
+    Md,
 }
 
 fn main() {
@@ -83,10 +92,23 @@ fn main() {
                 }
             }
         },
-        Commands::Doc { file, theme } => {
-            let printer = HtmlPrinter::new(args.watch, theme.clone());
-            let doc = Doc::new(Path::new(&file));
-            run_command(&args, doc, printer)
+        Commands::Doc { file, theme, format } => {
+            match format {
+                DocFormat::Html => {
+                    let printer = HtmlPrinter::new(args.watch, theme.clone());
+                    let doc = Doc::new(Path::new(&file));
+                    run_command(&args, doc, printer)
+                }
+                DocFormat::Md => {
+                    if args.watch {
+                        println!("WARNING: csv format does not support watch mode");
+                        args.watch = false;
+                    }
+                    let printer = MarkdownPrinter::new();
+                    let doc = Doc::new(Path::new(&file));
+                    run_command(&args, doc, printer)
+                }
+            }
         },
         Commands::Show { file, theme } => {
             let printer = HtmlPrinter::new(args.watch, theme.clone());

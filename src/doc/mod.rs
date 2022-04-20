@@ -1,3 +1,5 @@
+mod markdown_printer;
+
 use std::error::Error;
 use std::fs::File;
 use std::io::{Read};
@@ -6,6 +8,8 @@ use std::vec::IntoIter;
 use pulldown_cmark::{Parser, Event, Tag, CodeBlockKind, CowStr};
 use crate::framework::{Loader, print_to_vec};
 use crate::calc::{Calc, CsvPrinter};
+
+pub use markdown_printer::MarkdownPrinter;
 
 pub struct Doc<'a>{
     file: &'a Path,
