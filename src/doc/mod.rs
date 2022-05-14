@@ -88,7 +88,7 @@ pub fn render_markdown<'a>(input: &'a str, root: Option<&Path>) -> Result<IntoIt
                 }
                 let highlighted = rs_html_generator.finalize();
 
-                events[i+1] = Event::Html(CowStr::from(highlighted));
+                events[i+1] = Event::Html(CowStr::from(format!("<pre class=\"code\">{}</pre>", highlighted)));
                 events[i+2] = Event::End(Tag::Paragraph);
             }
         }
