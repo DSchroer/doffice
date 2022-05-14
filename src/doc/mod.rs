@@ -6,6 +6,9 @@ use std::io::{Read};
 use std::path::{Path, PathBuf};
 use std::vec::IntoIter;
 use pulldown_cmark::{Parser, Event, Tag, CodeBlockKind, CowStr};
+use syntect::parsing::SyntaxSet;
+use syntect::html::{ClassedHTMLGenerator, ClassStyle};
+use syntect::util::LinesWithEndings;
 use crate::framework::{Loader, print_to_vec};
 use crate::calc::{Calc, CsvPrinter};
 
@@ -65,6 +68,29 @@ pub fn render_markdown<'a>(input: &'a str, root: Option<&Path>) -> Result<IntoIt
             let computed = print_to_vec(csv, printer)?;
 
             events[i+1] = Event::Text(CowStr::from(String::from_utf8(computed)?));
+        }
+
+        if let  Event::Start(Tag::CodeBlock(CodeBlockKind::Fenced(x))) = &events[i] {
+            let lang = x.clone().into_string();
+            let ps = SyntaxSet::load_defaults_newlines();
+
+            let text: String = match &events[i+1] {
+                Event::Text(text) => text.clone().into_string(),
+                _ => panic!("mal formatted code block")
+            };
+
+            if let Some(syntax) = ps.find_syntax_by_extension(&lang) {
+                events[i] = Event::Start(Tag::Paragraph);
+
+                let mut rs_html_generator = ClassedHTMLGenerator::new_with_class_style(&syntax, &ps, ClassStyle::Spaced);
+                for line in LinesWithEndings::from(&text) {
+                    rs_html_generator.parse_html_for_line_which_includes_newline(line)?;
+                }
+                let highlighted = rs_html_generator.finalize();
+
+                events[i+1] = Event::Html(CowStr::from(highlighted));
+                events[i+2] = Event::End(Tag::Paragraph);
+            }
         }
 
         if let Some(root) = root {
