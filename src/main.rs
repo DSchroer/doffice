@@ -9,12 +9,15 @@ mod html;
 use std::error::Error;
 use std::path::{Path, PathBuf};
 use std::process::exit;
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueHint};
 use crate::calc::{Calc, CsvPrinter};
 use crate::doc::{Doc, MarkdownPrinter};
 use crate::framework::{Printer, Loader, print_to_file, print_to_web};
 use crate::html::HtmlPrinter;
 use crate::show::{Slides};
+
+#[cfg(feature = "ui")]
+use klask::Settings;
 
 #[derive(Parser)]
 #[clap(author, version)]
@@ -35,9 +38,10 @@ struct Args {
 enum Commands {
     /// Process CSV file
     Calc {
+        #[clap(value_hint=ValueHint::FilePath)]
         file: String,
         /// CSS theme file to apply to tables
-        #[clap(short, long)]
+        #[clap(short, long, value_hint=ValueHint::FilePath)]
         theme: Option<String>,
         /// Output file format
         #[clap(short, long, arg_enum, default_value = "csv")]
@@ -45,9 +49,10 @@ enum Commands {
     },
     /// Process markdown document
     Doc {
+        #[clap(value_hint=ValueHint::FilePath)]
         file: String,
         /// CSS theme file to apply to the document
-        #[clap(short, long)]
+        #[clap(short, long, value_hint=ValueHint::FilePath)]
         theme: Option<String>,
         /// Output file format
         #[clap(short, long, arg_enum, default_value = "html")]
@@ -55,9 +60,10 @@ enum Commands {
     },
     /// Create slides from markdown
     Show {
+        #[clap(value_hint=ValueHint::FilePath)]
         file: String,
         /// CSS theme file to apply to slides
-        #[clap(short, long)]
+        #[clap(short, long, value_hint=ValueHint::FilePath)]
         theme: Option<String>
     },
 }
@@ -75,8 +81,13 @@ pub enum DocFormat {
 }
 
 fn main() {
-    let mut args = Args::parse();
+    #[cfg(feature = "ui")]
+    klask::run_derived::<Args, _>(Settings::default(), process);
+    #[cfg(not(feature = "ui"))]
+    process(Args::parse());
+}
 
+fn process(mut args: Args) {
     let res = match &args.command {
         Commands::Calc { file, theme, format } => {
             let calc = Calc::from_file(file.clone());
