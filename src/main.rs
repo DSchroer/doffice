@@ -25,7 +25,10 @@ struct Args {
     command: Commands,
     /// Watch mode
     #[clap(short, long, global = true)]
-    watch: bool
+    watch: bool,
+    /// Watch mode port
+    #[clap(short, long, global = true, default_value = "8080")]
+    port: u32
 }
 
 #[derive(Subcommand)]
@@ -130,7 +133,7 @@ fn run_command<T, TPrinter: Printer<T>>(args: &Args, loader: impl Loader<Result=
     let watch_paths = watch_paths(&args.command);
 
     if args.watch {
-        print_to_web(loader, printer, 8080, watch_paths)
+        print_to_web(loader, printer, args.port, watch_paths)
     }else {
         let outfile = out_file(&args.command, <TPrinter>::extension());
         print_to_file(loader, printer, &outfile)
