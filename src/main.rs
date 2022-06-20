@@ -40,6 +40,9 @@ enum Commands {
     Calc {
         #[clap(value_hint=ValueHint::FilePath)]
         file: String,
+        /// Output location
+        #[clap(short, long, value_hint=ValueHint::FilePath)]
+        output_file: Option<String>,
         /// CSS theme file to apply to tables
         #[clap(short, long, value_hint=ValueHint::FilePath)]
         theme: Option<String>,
@@ -51,6 +54,9 @@ enum Commands {
     Doc {
         #[clap(value_hint=ValueHint::FilePath)]
         file: String,
+        /// Output location
+        #[clap(short, long, value_hint=ValueHint::FilePath)]
+        output_file: Option<String>,
         /// CSS theme file to apply to the document
         #[clap(short, long, value_hint=ValueHint::FilePath)]
         theme: Option<String>,
@@ -62,6 +68,9 @@ enum Commands {
     Show {
         #[clap(value_hint=ValueHint::FilePath)]
         file: String,
+        /// Output location
+        #[clap(short, long, value_hint=ValueHint::FilePath)]
+        output_file: Option<String>,
         /// CSS theme file to apply to slides
         #[clap(short, long, value_hint=ValueHint::FilePath)]
         theme: Option<String>
@@ -89,7 +98,7 @@ fn main() {
 
 fn process(mut args: Args) {
     let res = match &args.command {
-        Commands::Calc { file, theme, format } => {
+        Commands::Calc { file, theme, format, .. } => {
             let calc = Calc::from_file(file.clone());
             match format {
                 CalcFormat::Html => {
@@ -106,7 +115,7 @@ fn process(mut args: Args) {
                 }
             }
         },
-        Commands::Doc { file, theme, format } => {
+        Commands::Doc { file, theme, format, .. } => {
             match format {
                 DocFormat::Html => {
                     let printer = HtmlPrinter::new(args.watch, theme.clone());
@@ -124,7 +133,7 @@ fn process(mut args: Args) {
                 }
             }
         },
-        Commands::Show { file, theme } => {
+        Commands::Show { file, theme, .. } => {
             let printer = HtmlPrinter::new(args.watch, theme.clone());
             let slides = Slides::new(Path::new(&file));
             run_command(&args, slides, printer)
@@ -153,14 +162,23 @@ fn run_command<T, TPrinter: Printer<T>>(args: &Args, loader: impl Loader<Result=
 
 fn out_file(command: &Commands, extension: &str) -> PathBuf {
     match command {
-        Commands::Calc { file, .. } => {
-            Path::new(&file).with_extension(format!("out.{}", extension))
+        Commands::Calc { file, output_file, .. } => {
+            match output_file {
+                None => Path::new(&file).with_extension(format!("out.{}", extension)),
+                Some(p) => Path::new(p).to_path_buf()
+            }
         }
-        Commands::Doc { file, .. } => {
-            Path::new(&file).with_extension(format!("out.{}", extension))
+        Commands::Doc { file, output_file, .. } => {
+            match output_file {
+                None => Path::new(&file).with_extension(format!("out.{}", extension)),
+                Some(p) => Path::new(p).to_path_buf()
+            }
         }
-        Commands::Show { file, .. } => {
-            Path::new(&file).with_extension(format!("out.{}", extension))
+        Commands::Show { file, output_file, .. } => {
+            match output_file {
+                None => Path::new(&file).with_extension(format!("out.{}", extension)),
+                Some(p) => Path::new(p).to_path_buf()
+            }
         }
     }
 }

@@ -1,5 +1,13 @@
 all: build
 
+.docs: .docs/index.html .docs/demos.html .docs/examples/intro-demo.html
+
+.docs/%.html: docs/%.md docs/new.min.css
+	doffice doc $(word 1,$^) -t docs/new.min.css -o $@
+
+.docs/examples/%.html: docs/examples/%.md docs/examples/%.css
+	doffice show $(word 1,$^) -t $(word 2,$^) -o $@
+
 build: src/html/res/reveal.out.js src/html/res/reveal.out.css src/html/res/white.out.css
 	cargo build
 
