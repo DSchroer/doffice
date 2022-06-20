@@ -2,6 +2,8 @@
 
 Set of simple office suite tools that work on plain text files. 
 
+[View more](https://dschroer.github.io/doffice/)
+
 ### Usage
 
 ```
