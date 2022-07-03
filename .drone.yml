@@ -4,13 +4,13 @@ type: docker
 name: build
 
 steps:
- - name: build and test
-   image: rust:alpine
-   commands:
-     - apk add nodejs make curl unzip
-     - make
-     - cargo build
-     - cargo test
+  - name: build and test
+    image: rust:alpine
+    commands:
+      - apk add nodejs make curl unzip
+      - make
+      - cargo build
+      - cargo test
 
   - template: github-mirror
     repo: git@github.com:DSchroer/doffice.git
