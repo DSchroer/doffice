@@ -18,5 +18,4 @@ async function process(from, to) {
     fs.writeFileSync(to, output.css);
 }
 
-process("reveal.js-master/dist/theme/white.css", "src/show/res/white.out.css");
-process("reveal.js-master/dist/theme/black.css", "src/show/res/black.out.css");
+process("reveal.js-master/dist/theme/white.css", "src/html/res/white.out.css");
