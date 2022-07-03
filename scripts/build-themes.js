@@ -11,7 +11,7 @@ async function process(from, to) {
         .use(atImport())
         .use(url({
             url: "inline",
-            basePath: path.resolve('reveal.js-master/dist/theme/fonts/source-sans-pro'),
+            basePath: path.resolve('node_modules/reveal.js/dist/theme/fonts/source-sans-pro'),
             encodeType: "base64"
         }))
         .process(css, { from, to });
