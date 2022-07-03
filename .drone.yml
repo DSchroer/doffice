@@ -8,7 +8,7 @@ steps:
     image: rust
     commands:
       - apt update
-      - apt install -y nodejs make curl unzip
+      - apt install -y nodejs make curl unzip npm
       - make
       - cargo build
       - cargo test
