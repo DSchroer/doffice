@@ -5,10 +5,12 @@ name: build
 
 steps:
   - name: build and test
-    image: rust
+    image: rust:unstable
     commands:
       - apt update
       - apt install -y nodejs make curl unzip npm
+      - rustup update nightly
+      - rustup default nightly
       - make
       - cargo build
       - cargo test
