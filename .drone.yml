@@ -7,7 +7,7 @@ steps:
   - name: build and test
     image: rust:alpine
     commands:
-      - apk add nodejs make curl unzip
+      - apk add --no-cache nodejs make curl unzip
       - make
       - cargo build
       - cargo test
