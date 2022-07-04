@@ -5,9 +5,9 @@ name: build
 
 steps:
   - name: build and test
-    image: rust:alpine
+    image: rust
     commands:
-      - apk add --no-cache nodejs
+      - apt update; apt install -y nodejs npm
       - rustup update nightly; rustup default nightly
       - cargo build
       - cargo test
