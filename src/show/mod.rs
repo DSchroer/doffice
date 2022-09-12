@@ -51,25 +51,20 @@ impl Presentation {
         let mut last = 0;
         let mut layout = None;
 
-        for cap in pattern.captures_iter(&self.source) {
-            let (index, matched) = cap.iter().enumerate()
-                .skip(1)
-                .find(|t| t.1.is_some())
-                .map(|t| (t.0, t.1.unwrap().as_str()))
-                .unwrap();
+        for captures in pattern.captures_iter(&self.source) {
+            let slide = captures.get(0).unwrap();
+
+            let index = slide.start();
 
             let slide_text = &self.source[last..index];
 
             if last != index {
                 slides.push(Slide{ md: slide_text, path, layout });
-                last = index + matched.len();
+                last = slide.end();
             }
 
-            layout = if let Some(c) = pattern.captures(matched) {
-                match c.get(1) {
-                    None => None,
-                    Some(m) => Some(&self.source[index+m.range().start..index+m.range().end])
-                }
+            layout = if let Some(m) = captures.get(1) {
+                Some(&self.source[m.range()])
             }else{
                 None
             };
