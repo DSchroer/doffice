@@ -51,7 +51,13 @@ impl Presentation {
         let mut last = 0;
         let mut layout = None;
 
-        for (index, matched) in self.source.match_indices(&pattern) {
+        for cap in pattern.captures_iter(&self.source) {
+            let (index, matched) = cap.iter().enumerate()
+                .skip(1)
+                .find(|t| t.1.is_some())
+                .map(|t| (t.0, t.1.unwrap().as_str()))
+                .unwrap();
+
             let slide_text = &self.source[last..index];
 
             if last != index {
