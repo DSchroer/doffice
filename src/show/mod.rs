@@ -112,7 +112,9 @@ mod tests {
     #[test]
     fn splits_slides() {
         let pres = Presentation::new("a<!--slide-->b");
-        assert_eq!(2, pres.slides().unwrap().len())
+        assert_eq!(2, pres.slides().unwrap().len());
+        assert_eq!("a", pres.slides().unwrap().nth(0).unwrap().md);
+        assert_eq!("b", pres.slides().unwrap().nth(1).unwrap().md)
     }
 
     #[test]
