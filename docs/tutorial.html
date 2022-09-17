@@ -5,10 +5,33 @@
 </style>
 </head>
 <body>
-<h1>DOffice</h1>
-<p>A simple text based office suite. Useful for creating documents, websites, presentations and spreadsheets.</p>
-<p><a href="./tutorial">Getting Started</a>
-<a href="./demos">Demos</a></p>
+<h1>Getting Started</h1>
+<h2>Installation</h2>
+<p>Currently the easiest way to install doffice is via <a href="https://doc.rust-lang.org/cargo/">Cargo</a>.</p>
+<p><pre class="code"><span class="source shell bash"><span class="meta function-call shell"><span class="variable function shell">cargo</span></span><span class="meta function-call arguments shell"> install<span class="variable parameter option shell"><span class="punctuation definition parameter shell"> --</span>git</span> https://github.com/DSchroer/doffice.gits</span>
+</span></pre></p>
+<p>After that you should have <code>doffice</code> available in your command line.</p>
+<p>DOffice has three main commands:</p>
+<ul>
+<li><a href="#show">show</a>: slideshow generation</li>
+<li><a href="#docs">docs</a>: document generation</li>
+<li><a href="#calc">calc</a>: spreadsheet engine</li>
+</ul>
+<h2>Show</h2>
+<p><code>Show</code> is the doffice presentation tool. It allows you to make re-usable slideshows from a markdown file. </p>
+<p>The key to making a presentation is to add the magic comment <code>&lt;!-- slide --&gt;</code> where the slide gaps should be located.</p>
+<p><pre class="code"><span class="text html markdown">
+<span class="meta block-level markdown"><span class="markup heading 1 markdown"><span class="punctuation definition heading begin markdown">#</span> </span><span class="markup heading 1 markdown"><span class="entity name section markdown">This is the first slide</span><span class="meta whitespace newline markdown">
+</span></span></span>
+<span class="meta disable-markdown"><span class="comment block html"><span class="punctuation definition comment begin html">&lt;!--</span> slide <span class="punctuation definition comment end html">--&gt;</span></span></span><span class="meta disable-markdown">
+</span>
+<span class="meta block-level markdown"><span class="markup heading 1 markdown"><span class="punctuation definition heading begin markdown">#</span> </span><span class="markup heading 1 markdown"><span class="entity name section markdown">This is the second slide</span><span class="meta whitespace newline markdown">
+</span></span></span>
+</span></pre></p>
+<h3>Advanced</h3>
+<p>The slide rendering engine that is used by Show is <a href="https://revealjs.com/">Reveal.JS</a>. Most tricks from reveal will work within Show.</p>
+<h2>Docs</h2>
+<h2>Calc</h2>
 
 <script>
     
