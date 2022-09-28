@@ -101,10 +101,15 @@ pub fn render_markdown<'a>(input: &'a str, root: Option<&Path>) -> Result<IntoIt
                     let ext = image_path.clone();
                     File::open(image_path)?.read_to_end(&mut buf)?;
 
-                    let data = base64::encode(buf);
+                    let extension = ext.extension().unwrap().to_str().unwrap();
 
-                    let image = format!("data:image/{};base64,{}", ext.extension().unwrap().to_str().unwrap(), data);
-                    events[i] = Event::Start(Tag::Image(t.clone(), CowStr::from(image), x.clone()))
+                    if extension == "svg" {
+                        events[i] = Event::Html(CowStr::from(String::from_utf8(buf).unwrap()))
+                    }else{
+                        let data = base64::encode(buf);
+                        let image = format!("data:image/{};base64,{}", extension, data);
+                        events[i] = Event::Start(Tag::Image(t.clone(), CowStr::from(image), x.clone()))
+                    }
                 },
                 _ => {}
             }
