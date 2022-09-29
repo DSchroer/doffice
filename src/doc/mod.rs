@@ -136,6 +136,11 @@ mod tests {
     }
 
     #[test]
+    fn highlights_cs() {
+        assert!(&render("```cs\nvar t = 100;\n```").contains("var</span>"));
+    }
+
+    #[test]
     fn supports_utf8() {
         assert_eq!("<p>😊</p>\n", &render("😊"));
     }
